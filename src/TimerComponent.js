@@ -16,9 +16,16 @@ const TimerComponent = () => {
     };
 
     const handleDurationChange = (event) => {
-        const newDuration = parseInt(event.target.value) || 0;
-        setDuration(newDuration);
-        setTimeLeft(newDuration);
+        const newDuration = parseInt(event.target.value);
+        console.log("newDuration: ", newDuration)
+
+        if (Number.isNaN(newDuration)) {
+            setDuration('');
+            setTimeLeft(0);
+        } else {
+            setDuration(newDuration);
+            setTimeLeft(newDuration);
+        }
     }
 
     const stopTimer = () => {
@@ -30,12 +37,12 @@ const TimerComponent = () => {
     }
 
     const toggleTimer = () => {
-        // if its a fresh, new running timer, update time left display
+        // if its a fresh/new running timer, update time left display
         if (!isRunning && freshSet) {
             setTimeLeft(duration)
         }
 
-        // if its not fresh set, its just toggling b/w start and pause
+        // if its not fresh set, just toggle b/w start and pause
         setIsRunning(!isRunning);
     }
 
@@ -114,6 +121,13 @@ const TimerComponent = () => {
                 onClick={stopTimer}>
                     stop
             </button>
+
+            <div>
+                <ul>sets</ul>
+                    <li>item 1</li>
+                    <li>item 2</li>
+            </div>
+            
         </div>
     );
 };
