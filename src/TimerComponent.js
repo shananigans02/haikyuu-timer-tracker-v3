@@ -11,14 +11,52 @@ const TimerComponent = () => {
     const [isRunning, setIsRunning] = useState(false); 
     const [inputValue, setInputValue] = useState('');
 
+    const [startTime, setStartTime] = useState(null);
+    const [endTime, setEndTime] = useState(null);
+    
+    const [segmentStart, setSegmentStart] = useState(null);
+    const [totalElapsedTime, setTotalElapsedTime] = useState(0);
+    const [sets, setSets] = useState([]);
+    const [isRecordable, setIsRecordable] = useState(false);
+
+    
+    const formatTime = (date) => {
+        return date ? date.toLocaleTimeString([], {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        }) : ''
+    };
+
+    const formatElapsedTime = (seconds) => {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        if (minutes > 0) {
+            return `${minutes} ${minutes === 1 ? "min" : "mins"}`;
+        } else {
+            return `${remainingSeconds} ${ remainingSeconds === 1 ? "sec" : "secs"}`;
+        }
+
+    };
+
+    // handling changes
     const handleInputChange = (event) => {
         setInputValue(event.target.value); 
     };
 
     const handleDurationChange = (event) => {
         const newDuration = parseInt(event.target.value);
-        console.log("newDuration: ", newDuration)
+        // console.log("newDuration: ", newDuration)
 
+        // should be a positive number
+        if (newDuration < 0) {
+            alert("please enter a positive number")
+            setDuration('');
+            setTimeLeft(0);
+            return;
+        }
+
+        // if empty
         if (Number.isNaN(newDuration)) {
             setDuration('');
             setTimeLeft(0);
@@ -27,39 +65,119 @@ const TimerComponent = () => {
             setTimeLeft(newDuration);
         }
     }
+    
+    const toggleTimer = () => {
+        if (!isRunning && freshSet) {
+            // START timer if u aren't not running yet, its a fresh set
+            const now = new Date();
+            setStartTime(now);
+            setSegmentStart(now.getTime()); // Date.now() is timestamp in milliseconds
+            setTimeLeft(duration);
+            setIsRunning(true); 
+            setfreshSet(false);
+            setIsRecordable(true);
+        } else if (!isRunning && !freshSet) {
+            // RESUME timer if we aren't running, its not fresh set
+            setSegmentStart(Date.now())
+            setIsRunning(true);
+        } else if (isRunning) {
+            // PAUSE timer if currently running, and let's log elapsed time
+            const currentEnd = Date.now()
+            const segmentDuration = Math.floor((currentEnd - segmentStart) / 1000);
+            setTotalElapsedTime((prev) => prev + segmentDuration);
+            console.log('total elapsed time: ', totalElapsedTime)
+            
+            // reset to start another segment to calculate elapsed time with
+            setIsRunning(false);
+            setSegmentStart(null);
+        }  
+    }
 
     const stopTimer = () => {
+        // reset
         setIsRunning(false);
+        setfreshSet(true);
+
         setDuration(30);
         setTimeLeft(4);
         setInputValue('')
-        setfreshSet(true);
+        setStartTime(null);
+        setEndTime(null);
+        setSegmentStart(null);
+        setTotalElapsedTime(0);
+        setIsRecordable(false);
     }
 
-    const toggleTimer = () => {
-        // if its a fresh/new running timer, update time left display
-        if (!isRunning && freshSet) {
-            setTimeLeft(duration)
-        }
+    const recordSet = () => {
+        // record last elapsed time and total it up
+        if (isRecordable) {
+            const currentEnd = Date.now();
+            
+            if (segmentStart !== null) {
+                const segmentDuration = Math.floor((currentEnd - segmentStart) / 1000);
 
-        // if its not fresh set, just toggle b/w start and pause
-        setIsRunning(!isRunning);
+                setTotalElapsedTime((prev) => {
+                    const finalElapsedTime = prev + segmentDuration;
+    
+                    // record end time
+                    const endTimeDate = new Date()
+                    setEndTime(endTimeDate);
+    
+                    console.log("finalElapsedTime: ", finalElapsedTime)
+                    
+                    // record set information
+                    setSets(prevSets => [...sets, 
+                        {
+                            start: startTime,
+                            end: endTimeDate,
+                            elapsed: finalElapsedTime,
+                            task: inputValue
+                        }
+                    ]);
+    
+                    return finalElapsedTime;
+                })             
+            } else {
+                // there's no active segment to calculate since segmentStart is null
+                const endTimeDate = new Date()
+                setEndTime(endTimeDate);
+
+                setSets(prevSets => [...sets, 
+                    {
+                        start: startTime,
+                        end: endTimeDate,
+                        elapsed: totalElapsedTime,
+                        task: inputValue
+                    }
+                ]);
+            }
+            // reset information
+            stopTimer();
+        } else {
+            // isRecordable is false, just a guard clause
+            console.log("isRecordable: ", isRecordable)
+            return;
+        }
+            
+        
     }
 
     useEffect(() => {
-        console.log("effect running, isRunning:", isRunning);
+        // console.log("effect running, isRunning:", isRunning);
         let intervalId;
 
         if(isRunning) {
             intervalId = setInterval(() => {
                 setTimeLeft(currTime => {
-                    if (currTime < 1) {
-                        console.log("currTime < 1 is triggered")
-                        setIsRunning(false);
-                        setfreshSet(true);
+                    // when currTime is on 5th tick of 1 -> 0, so ON 5th second
+                    if (currTime <= 1) {
+                        // console.log("currTime < 1 is triggered")
+                        if (isRecordable) {
+                            recordSet();
+                        }
                         return 0;    
                     }
-                    console.log("timeLeft is NOT <=1")
+                    // console.log("timeLeft is NOT <=1")
                     setfreshSet(false);
                     return currTime - 1;
                     
@@ -70,7 +188,7 @@ const TimerComponent = () => {
                 if (intervalId) {
                     // cleanup function that runs when useEffect is called + theres existing interval to clean up
                     // when we first start, the cleanup fn is defined but not run.
-                    console.log('cleanup: clearing interval')
+                    // console.log('cleanup: clearing interval')
                     clearInterval(intervalId);
                 }
             }
@@ -79,11 +197,16 @@ const TimerComponent = () => {
     
     // watching specific state variables
     useEffect(() => {
-        console.log("inside the use effect --------")
-        console.log("timeleft: ", timeLeft)
-        console.log("isRunning: ", isRunning)
-        console.log("fresh set: ", freshSet)
-    }, [isRunning, freshSet, timeLeft])
+        // console.log("inside the use effect --------")
+        // console.log("timeleft: ", timeLeft)
+        // console.log("isRunning status: ", isRunning)
+        // console.log("fresh set status: ", freshSet)
+        console.log("start time: ", startTime)
+        console.log("end time: ", endTime)
+        console.log("segment start time: ", segmentStart)
+        console.log("total elasped time: ", totalElapsedTime)
+    }, [startTime, endTime, segmentStart, totalElapsedTime])
+    // [isRunning, freshSet, timeLeft, startTime, endTime, segmentStart, totalElapsedTime]
 
     return (
         <div>
@@ -113,19 +236,25 @@ const TimerComponent = () => {
             </div>
 
             <p> time left: {Math.floor(timeLeft / 60)}:{timeLeft % 60 < 10? '0' : ''}{timeLeft % 60}</p>
-            <button
-                onClick={toggleTimer}>
-                {isRunning ? 'pause' : 'start'}
-            </button>
-            <button
-                onClick={stopTimer}>
-                    stop
-            </button>
+
+            <button onClick={toggleTimer}> {isRunning ? 'pause' : 'start'}</button>
+
+            <button onClick={stopTimer}>stop</button>
+
+            {isRecordable && (<button onClick={recordSet}>record</button>)}
+            
 
             <div>
-                <ul>sets</ul>
-                    <li>item 1</li>
-                    <li>item 2</li>
+                <h3>sets: </h3>
+                <ul>
+                    {sets.map((set, index) => (
+                        <li key={index}>
+                            {formatTime(set.start)} -  {formatTime(set.end)} ({formatElapsedTime(set.elapsed)})
+                            {set.task && `: ${set.task}`}
+                        </li>
+                    ))}
+                </ul>
+                   
             </div>
             
         </div>
