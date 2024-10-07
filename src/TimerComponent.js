@@ -1,6 +1,6 @@
 // update duration, timeLeft hardcoded values. in defn, stopTimer
 
-import React, { useState, useEffect }  from "react";
+import React, { useState, useEffect, useCallback }  from "react";
 
 const TimerComponent = () => {
     // duration in mins later but secs for now
@@ -46,7 +46,6 @@ const TimerComponent = () => {
 
     const handleDurationChange = (event) => {
         const newDuration = parseInt(event.target.value);
-        // console.log("newDuration: ", newDuration)
 
         // should be a positive number
         if (newDuration < 0) {
@@ -99,7 +98,7 @@ const TimerComponent = () => {
         setfreshSet(true);
 
         setDuration(30);
-        setTimeLeft(4);
+        setTimeLeft(5);
         setInputValue('')
         setStartTime(null);
         setEndTime(null);
@@ -108,7 +107,7 @@ const TimerComponent = () => {
         setIsRecordable(false);
     }
 
-    const recordSet = () => {
+    const recordSet = useCallback(() => {
         // record last elapsed time and total it up
         if (isRecordable) {
             const currentEnd = Date.now();
@@ -157,10 +156,11 @@ const TimerComponent = () => {
             // isRecordable is false, just a guard clause
             console.log("isRecordable: ", isRecordable)
             return;
-        }
-            
-        
-    }
+        }  
+    // dependencies - variables / state values that come from / are defined outside the fn but are used within the fn
+    // point is to update function whenever these external values change
+    // since finalElapsedTime and endTimeDate are both local variables calculated within this fn, they dont need to be listed as dependency array
+    }, [isRecordable, segmentStart, startTime, totalElapsedTime, inputValue, sets]);
 
     useEffect(() => {
         // console.log("effect running, isRunning:", isRunning);
@@ -193,7 +193,7 @@ const TimerComponent = () => {
                 }
             }
         }
-    }, [isRunning]);
+    }, [isRunning, isRecordable, recordSet]);
     
     // watching specific state variables
     useEffect(() => {
