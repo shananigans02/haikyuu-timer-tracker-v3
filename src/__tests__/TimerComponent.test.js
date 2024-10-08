@@ -35,7 +35,28 @@ describe('TimerComponent', () => {
         expect(global.setInterval).toHaveBeenLastCalledWith(expect.any(Function), 1000);
     });
 
-    test('elapsed time calculation - no pauses', () => {
+    test('elapsed time calc - timer automatically stops and records when reaching zero', () => {
+        const { getByText, getByLabelText } = render(<TimerComponent />);
+        
+        // Set duration to 5 seconds
+        const durationInput = getByLabelText('duration:');
+        fireEvent.change(durationInput, { target: { value: '5' } });
+        
+        // Start timer
+        fireEvent.click(getByText('start'));
+        
+        // Advance timer by 5 seconds
+        act(() => {
+            jest.advanceTimersByTime(5000);
+        });
+        
+        // Timer should be stopped and set recorded
+        expect(getByText('start')).toBeInTheDocument(); // Not 'pause'
+        expect(getByText(/5 secs/)).toBeInTheDocument();
+    });
+    
+
+    test('elapsed time calc - no pauses, manually record', () => {
         const { getByText } = render(<TimerComponent />);
 
         // Start timer
@@ -53,7 +74,7 @@ describe('TimerComponent', () => {
         expect(getByText(/3 secs/)).toBeInTheDocument();
     });
 
-    test('elapsed time test - with 1 pause, resume for a while, then record', () => {
+    test('elapsed time calc - with 1 pause, resume for a while, then record', () => {
         const { getByText } = render(<TimerComponent />);
 
         fireEvent.click(getByText('start'));
@@ -82,7 +103,7 @@ describe('TimerComponent', () => {
         expect(getByText(/4 secs/)).toBeInTheDocument();
     });
 
-    test('elapsed time test - with 1 pause then straight to record', () => {
+    test('elapsed time calc - with 1 pause then straight to record', () => {
         const { getByText, getByLabelText } = render(<TimerComponent />);
 
         // set duration to be 20s
@@ -111,7 +132,7 @@ describe('TimerComponent', () => {
         expect(getByText(/17 secs/)).toBeInTheDocument();
     });
 
-    test('elapsed time test - with 1 pause, resume for a while, 1 pause, resume for a while and straight to record', () => {
+    test('elapsed time calc - with 1 pause, resume for a while, 1 pause, resume for a while and straight to record', () => {
         const { getByText, getByLabelText } = render(<TimerComponent />);
 
         // set duration to be 30s
@@ -152,7 +173,7 @@ describe('TimerComponent', () => {
         expect(getByText(/19 secs/)).toBeInTheDocument();
     });
 
-    test('elapsed time test - with 1 pause, resume for a while, 1 pause, resume for a while and straight to record', () => {
+    test('elapsed time calc - with 1 pause, resume for a while, 1 pause, resume for a while and straight to record', () => {
         const { getByText, getByLabelText } = render(<TimerComponent />);
 
         // set duration to be 30s
@@ -188,6 +209,97 @@ describe('TimerComponent', () => {
         expect(getByText(/20 secs/)).toBeInTheDocument();
     });
 
+    test('long duration timer works correctly', () => {
+        const { getByText, getByLabelText } = render(<TimerComponent />);
+        
+        // Set duration to 15 minutes (900 seconds)
+        const durationInput = getByLabelText('duration:');
+        fireEvent.change(durationInput, { target: { value: '900' } });
+        
+        fireEvent.click(getByText('start'));
+        
+        // Advance timer by 14 minutes
+        act(() => {
+            jest.advanceTimersByTime(840000); // 14 minutes
+        });
+        
+        // Verify timer is still running
+        expect(getByText('pause')).toBeInTheDocument();
+        
+        // Advance to completion
+        act(() => {
+            jest.advanceTimersByTime(60000); // 1 more minute
+        });
+        
+        // Timer should be stopped and 15 minutes recorded
+        expect(getByText('start')).toBeInTheDocument();
+        expect(getByText(/15 mins/)).toBeInTheDocument();
+    });    
+
+    test('timer correctly handles browser tab switches and pauses', () => {
+        // Set up necessary hooks and start the timer
+        jest.useFakeTimers(); // Use fake timers to control time manually
+        const { getByText, getByLabelText } = render(<TimerComponent />);
+        
+        // Set duration to 35 minutes (2100 seconds)
+        const durationInput = getByLabelText('duration:');
+        fireEvent.change(durationInput, { target: { value: '2100' } });
+        
+        // Start timer
+        fireEvent.click(getByText('start'));
+        
+        // Advance by 5 minutes on the active tab
+        act(() => {
+            jest.advanceTimersByTime(5 * 60 * 1000); // 5 minutes
+        });
+    
+        // Simulate tab becoming inactive
+        act(() => {
+            document.dispatchEvent(new Event('visibilitychange'));
+            Object.defineProperty(document, 'hidden', { value: true, configurable: true });
+        });
+        
+        // Advance time while tab is inactive for 20 minutes
+        act(() => {
+            jest.advanceTimersByTime(20 * 60 * 1000); // 20 minutes
+        });
+    
+        // Simulate tab becoming active again
+        act(() => {
+            Object.defineProperty(document, 'hidden', { value: false, configurable: true });
+            document.dispatchEvent(new Event('visibilitychange'));
+        });
+    
+        // Pause the timer after 5 minutes of being active again
+        fireEvent.click(getByText('pause'));
+        act(() => {
+            jest.advanceTimersByTime(10 * 60 * 1000); // Wait 10 minutes while paused
+        });
+    
+        // Resume timer
+        fireEvent.click(getByText('start'));
+    
+        // Immediately switch to another tab after resuming (10 minutes left)
+        act(() => {
+            document.dispatchEvent(new Event('visibilitychange'));
+            Object.defineProperty(document, 'hidden', { value: true, configurable: true });
+        });
+    
+        // Advance time by 10 minutes for the remaining duration
+        act(() => {
+            jest.advanceTimersByTime(10 * 60 * 1000); // 10 minutes
+        });
+    
+        // Simulate tab becoming active again after timer runs out
+        act(() => {
+            Object.defineProperty(document, 'hidden', { value: false, configurable: true });
+            document.dispatchEvent(new Event('visibilitychange'));
+        });
+    
+        // Timer should be stopped and recorded should be 35 minutes
+        expect(getByText('start')).toBeInTheDocument(); // Button should now say "start" since the timer stopped
+        expect(getByText(/35 mins/)).toBeInTheDocument(); // Verify 35 minutes recorded
+    });    
 
     test('input field is disabled during timer run', () => {
         const { getByLabelText, getByText } = render(<TimerComponent />);

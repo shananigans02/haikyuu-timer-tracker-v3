@@ -1,10 +1,11 @@
 // update duration, timeLeft hardcoded values. in defn, stopTimer
 
-import React, { useState, useEffect, useCallback }  from "react";
+import React, { useState, useEffect, useCallback, useRef }  from "react";
+import haikyuuMelody from './assets/haikyuu_soft_melody.mp3';
 
 const TimerComponent = () => {
     // duration in mins later but secs for now
-    const [duration, setDuration] = useState('5');
+    const [duration, setDuration] = useState(5);
     // timeLeft tracked in seconds. useState(duration * 60)
     const [freshSet, setfreshSet] = useState(true);
     const [timeLeft, setTimeLeft] = useState(duration);
@@ -16,8 +17,11 @@ const TimerComponent = () => {
     
     const [segmentStart, setSegmentStart] = useState(null);
     const [totalElapsedTime, setTotalElapsedTime] = useState(0);
+    // array of objects, where each object is a completed timer session
     const [sets, setSets] = useState([]);
     const [isRecordable, setIsRecordable] = useState(false);
+    
+    const audioRef = useRef(null);
 
     
     const formatTime = (date) => {
@@ -70,7 +74,7 @@ const TimerComponent = () => {
             // START timer if u aren't not running yet, its a fresh set
             const now = new Date();
             setStartTime(now);
-            setSegmentStart(now.getTime()); // Date.now() is timestamp in milliseconds
+            setSegmentStart(now.getTime()); // timestamp in milliseconds
             setTimeLeft(duration);
             setIsRunning(true); 
             setfreshSet(false);
@@ -92,7 +96,7 @@ const TimerComponent = () => {
         }  
     }
 
-    const stopTimer = () => {
+    const stopTimer = useCallback (() => {
         // reset
         setIsRunning(false);
         setfreshSet(true);
@@ -105,7 +109,7 @@ const TimerComponent = () => {
         setSegmentStart(null);
         setTotalElapsedTime(0);
         setIsRecordable(false);
-    }
+    }, [])
 
     const recordSet = useCallback(() => {
         // record last elapsed time and total it up
@@ -125,7 +129,7 @@ const TimerComponent = () => {
                     console.log("finalElapsedTime: ", finalElapsedTime)
                     
                     // record set information
-                    setSets(prevSets => [...sets, 
+                    setSets(prevSets => [...prevSets, 
                         {
                             start: startTime,
                             end: endTimeDate,
@@ -141,7 +145,7 @@ const TimerComponent = () => {
                 const endTimeDate = new Date()
                 setEndTime(endTimeDate);
 
-                setSets(prevSets => [...sets, 
+                setSets(prevSets => [...prevSets, 
                     {
                         start: startTime,
                         end: endTimeDate,
@@ -160,7 +164,7 @@ const TimerComponent = () => {
     // dependencies - variables / state values that come from / are defined outside the fn but are used within the fn
     // point is to update function whenever these external values change
     // since finalElapsedTime and endTimeDate are both local variables calculated within this fn, they dont need to be listed as dependency array
-    }, [isRecordable, segmentStart, startTime, totalElapsedTime, inputValue, sets]);
+    }, [isRecordable, segmentStart, startTime, totalElapsedTime, inputValue, stopTimer]);
 
     useEffect(() => {
         // console.log("effect running, isRunning:", isRunning);
@@ -171,7 +175,11 @@ const TimerComponent = () => {
                 setTimeLeft(currTime => {
                     // when currTime is on 5th tick of 1 -> 0, so ON 5th second
                     if (currTime <= 1) {
-                        // console.log("currTime < 1 is triggered")
+                        clearInterval(intervalId); // stop interval immediately, rather than waiting for next effect cleanup
+                        setIsRunning(false);
+                        if (audioRef.current) {
+                            audioRef.current.play();
+                        }
                         if (isRecordable) {
                             recordSet();
                         }
@@ -198,15 +206,21 @@ const TimerComponent = () => {
     // watching specific state variables
     useEffect(() => {
         // console.log("inside the use effect --------")
-        // console.log("timeleft: ", timeLeft)
+        console.log("timeleft: ", timeLeft)
         // console.log("isRunning status: ", isRunning)
         // console.log("fresh set status: ", freshSet)
         console.log("start time: ", startTime)
         console.log("end time: ", endTime)
         console.log("segment start time: ", segmentStart)
         console.log("total elasped time: ", totalElapsedTime)
-    }, [startTime, endTime, segmentStart, totalElapsedTime])
+    }, [startTime, endTime, segmentStart, timeLeft, totalElapsedTime])
     // [isRunning, freshSet, timeLeft, startTime, endTime, segmentStart, totalElapsedTime]
+
+    useEffect(() => {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        document.title = `${minutes}:${seconds < 10 ? '0' : ''}${seconds} left`;
+    }, [timeLeft]);
 
     return (
         <div>
@@ -256,6 +270,8 @@ const TimerComponent = () => {
                 </ul>
                    
             </div>
+
+            <audio ref={audioRef} src={haikyuuMelody}/>
             
         </div>
     );
