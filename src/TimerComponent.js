@@ -1,9 +1,8 @@
 // update duration, timeLeft hardcoded values. in defn, stopTimer
-
 import React, { useState, useEffect, useCallback, useRef }  from "react";
 import haikyuuMelody from './assets/haikyuu_soft_melody.mp3';
 
-const TimerComponent = () => {
+const TimerComponent = ( { sets, setSets }) => {
     // duration in mins later but secs for now
     const [duration, setDuration] = useState(5);
     // timeLeft tracked in seconds. useState(duration * 60)
@@ -18,7 +17,6 @@ const TimerComponent = () => {
     const [segmentStart, setSegmentStart] = useState(null);
     const [totalElapsedTime, setTotalElapsedTime] = useState(0);
     // array of objects, where each object is a completed timer session
-    const [sets, setSets] = useState([]);
     const [isRecordable, setIsRecordable] = useState(false);
     
     const audioRef = useRef(null);
@@ -68,6 +66,13 @@ const TimerComponent = () => {
             setTimeLeft(newDuration);
         }
     }
+
+    const handleRemoveSet = (index) => {
+        const confirmRemove = window.confirm("remove this session?")
+        if (confirmRemove) {
+            setSets(prevSets => prevSets.filter((_, i) => i !== index));
+        }
+    };
     
     const toggleTimer = () => {
         if (!isRunning && freshSet) {
@@ -164,7 +169,7 @@ const TimerComponent = () => {
     // dependencies - variables / state values that come from / are defined outside the fn but are used within the fn
     // point is to update function whenever these external values change
     // since finalElapsedTime and endTimeDate are both local variables calculated within this fn, they dont need to be listed as dependency array
-    }, [isRecordable, segmentStart, startTime, totalElapsedTime, inputValue, stopTimer]);
+    }, [isRecordable, segmentStart, startTime, totalElapsedTime, inputValue, setSets, stopTimer]);
 
     useEffect(() => {
         // console.log("effect running, isRunning:", isRunning);
@@ -263,6 +268,11 @@ const TimerComponent = () => {
                 <ul>
                     {sets.map((set, index) => (
                         <li key={index}>
+                            <input
+                                type="checkbox"
+                                checked={true}
+                                onChange={() => handleRemoveSet(index)}
+                            /> 
                             {formatTime(set.start)} -  {formatTime(set.end)} ({formatElapsedTime(set.elapsed)})
                             {set.task && `: ${set.task}`}
                         </li>
