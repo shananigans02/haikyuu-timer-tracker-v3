@@ -2,11 +2,11 @@
 import React, { useState, useEffect, useCallback, useRef }  from "react";
 import haikyuuMelody from './assets/haikyuu_soft_melody.mp3';
 
-const TimerComponent = ( { sets, setSets }) => {
+const TimerComponent = ( { sessions, setSessions }) => {
     // duration in mins later but secs for now
     const [duration, setDuration] = useState(5);
     // timeLeft tracked in seconds. useState(duration * 60)
-    const [freshSet, setfreshSet] = useState(true);
+    const [freshSession, setfreshSession] = useState(true);
     const [timeLeft, setTimeLeft] = useState(duration);
     const [isRunning, setIsRunning] = useState(false); 
     const [inputValue, setInputValue] = useState('');
@@ -70,21 +70,21 @@ const TimerComponent = ( { sets, setSets }) => {
     const handleRemoveSet = (index) => {
         const confirmRemove = window.confirm("remove this session?")
         if (confirmRemove) {
-            setSets(prevSets => prevSets.filter((_, i) => i !== index));
+            setSessions(prevSets => prevSets.filter((_, i) => i !== index));
         }
     };
     
     const toggleTimer = () => {
-        if (!isRunning && freshSet) {
+        if (!isRunning && freshSession) {
             // START timer if u aren't not running yet, its a fresh set
             const now = new Date();
             setStartTime(now);
             setSegmentStart(now.getTime()); // timestamp in milliseconds
             setTimeLeft(duration);
             setIsRunning(true); 
-            setfreshSet(false);
+            setfreshSession(false);
             setIsRecordable(true);
-        } else if (!isRunning && !freshSet) {
+        } else if (!isRunning && !freshSession) {
             // RESUME timer if we aren't running, its not fresh set
             setSegmentStart(Date.now())
             setIsRunning(true);
@@ -104,7 +104,7 @@ const TimerComponent = ( { sets, setSets }) => {
     const stopTimer = useCallback (() => {
         // reset
         setIsRunning(false);
-        setfreshSet(true);
+        setfreshSession(true);
 
         setDuration(30);
         setTimeLeft(5);
@@ -134,7 +134,7 @@ const TimerComponent = ( { sets, setSets }) => {
                     console.log("finalElapsedTime: ", finalElapsedTime)
                     
                     // record set information
-                    setSets(prevSets => [...prevSets, 
+                    setSessions(prevSets => [...prevSets, 
                         {
                             start: startTime,
                             end: endTimeDate,
@@ -150,7 +150,7 @@ const TimerComponent = ( { sets, setSets }) => {
                 const endTimeDate = new Date()
                 setEndTime(endTimeDate);
 
-                setSets(prevSets => [...prevSets, 
+                setSessions(prevSets => [...prevSets, 
                     {
                         start: startTime,
                         end: endTimeDate,
@@ -169,7 +169,7 @@ const TimerComponent = ( { sets, setSets }) => {
     // dependencies - variables / state values that come from / are defined outside the fn but are used within the fn
     // point is to update function whenever these external values change
     // since finalElapsedTime and endTimeDate are both local variables calculated within this fn, they dont need to be listed as dependency array
-    }, [isRecordable, segmentStart, startTime, totalElapsedTime, inputValue, setSets, stopTimer]);
+    }, [isRecordable, segmentStart, startTime, totalElapsedTime, inputValue, setSessions, stopTimer]);
 
     useEffect(() => {
         // console.log("effect running, isRunning:", isRunning);
@@ -191,7 +191,7 @@ const TimerComponent = ( { sets, setSets }) => {
                         return 0;    
                     }
                     // console.log("timeLeft is NOT <=1")
-                    setfreshSet(false);
+                    setfreshSession(false);
                     return currTime - 1;
                     
                 });       
@@ -238,7 +238,7 @@ const TimerComponent = ( { sets, setSets }) => {
                     type="text"
                     value={inputValue}
                     onChange={handleInputChange}
-                    disabled={isRunning || !freshSet}
+                    disabled={isRunning || !freshSession}
                     placeholder="what are you working on?"
                 />
             </div>
@@ -250,7 +250,7 @@ const TimerComponent = ( { sets, setSets }) => {
                     type="number"
                     value={duration}
                     onChange={handleDurationChange}
-                    disabled={isRunning || !freshSet}
+                    disabled={isRunning || !freshSession}
                 />
             </div>
 
@@ -266,7 +266,7 @@ const TimerComponent = ( { sets, setSets }) => {
             <div>
                 <h3>sets: </h3>
                 <ul>
-                    {sets.map((set, index) => (
+                    {sessions.map((set, index) => (
                         <li key={index}>
                             <input
                                 type="checkbox"
