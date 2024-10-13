@@ -1,16 +1,16 @@
 {
   "files": {
-    "main.css": "/haikyuu-timer-tracker-v3/static/css/main.d43970f1.css",
-    "main.js": "/haikyuu-timer-tracker-v3/static/js/main.e5e79014.js",
+    "main.css": "/haikyuu-timer-tracker-v3/static/css/main.786f2820.css",
+    "main.js": "/haikyuu-timer-tracker-v3/static/js/main.b405abd4.js",
     "static/js/453.e1154b8b.chunk.js": "/haikyuu-timer-tracker-v3/static/js/453.e1154b8b.chunk.js",
     "static/media/haikyuu_soft_melody.mp3": "/haikyuu-timer-tracker-v3/static/media/haikyuu_soft_melody.c88b4f92daf3301bf472.mp3",
     "index.html": "/haikyuu-timer-tracker-v3/index.html",
-    "main.d43970f1.css.map": "/haikyuu-timer-tracker-v3/static/css/main.d43970f1.css.map",
-    "main.e5e79014.js.map": "/haikyuu-timer-tracker-v3/static/js/main.e5e79014.js.map",
+    "main.786f2820.css.map": "/haikyuu-timer-tracker-v3/static/css/main.786f2820.css.map",
+    "main.b405abd4.js.map": "/haikyuu-timer-tracker-v3/static/js/main.b405abd4.js.map",
     "453.e1154b8b.chunk.js.map": "/haikyuu-timer-tracker-v3/static/js/453.e1154b8b.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.d43970f1.css",
-    "static/js/main.e5e79014.js"
+    "static/css/main.786f2820.css",
+    "static/js/main.b405abd4.js"
   ]
 }
