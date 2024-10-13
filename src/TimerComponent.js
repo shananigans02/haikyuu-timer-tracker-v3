@@ -232,9 +232,9 @@ const TimerComponent = ( { sessions, setSessions, theme }) => {
     const borderColor = theme === 'dark' ? 'border-customOrange' : 'border-darkBlue';
 
     return (
-        <div className={`font-mono flex flex-col items-center justify-center ${baseColor} ${borderColor}`}>
+        <div className={`flex flex-col items-center justify-center w-full max-w-lg mx-auto font-mono ${baseColor} ${borderColor}`}>
             <div
-                className={`p-1 mb-1`}
+                className={`p-1 mb-1  ${baseColor} ${borderColor}`}
                 style={{
                     fontSize: `clamp(4rem, 20vw, 11rem)`,
                 }}
@@ -242,62 +242,59 @@ const TimerComponent = ( { sessions, setSessions, theme }) => {
                 {Math.floor(timeLeft / 60)}:{timeLeft % 60 < 10? '0' : ''}{timeLeft % 60}
             </div>
 
-            <div className="flex space-x-2 mb-4 w-full max-w-lg font-bold p-2">
-                <div>
-                    <input
-                        className={`border rounded-xl shadow w-full ${theme === 'dark' ? 'placeholder-dark' : 'placeholder-light'}`}
-                        id="input"
-                        type="text"
-                        value={inputValue}
-                        onChange={handleInputChange}
-                        disabled={isRunning || !freshSession}
-                        placeholder="working on..."
-                    />
-                </div>
-            
-                <div>
-                    <input
-                        className={ `border rounded-xl shadow w-24 ${theme === 'dark' ? 'placeholder-dark' : 'placeholder-light'}`}
-                        id="duration"
-                        type="number"
-                        value={duration}
-                        onChange={handleDurationChange}
-                        disabled={isRunning || !freshSession}
-                        placeholder="duration (mins)"
-                    />
-                </div>
+            <div className="flex space-x-2 w-full mb-4 font-bold">
+                <input
+                    className={`flex-grow p-2 border rounded-xl shadow  ${baseColor} ${borderColor} ${theme === 'dark' ? 'placeholder-dark' : 'placeholder-light'}`}
+                    id="input"
+                    type="text"
+                    value={inputValue}
+                    onChange={handleInputChange}
+                    disabled={isRunning || !freshSession}
+                    placeholder="working on..."
+                />
+                
+                <input
+                    className={ `w-24 p-2 border rounded-xl shadow ${baseColor} ${borderColor} ${theme === 'dark' ? 'placeholder-dark' : 'placeholder-light'}`}
+                    id="duration"
+                    type="number"
+                    value={duration}
+                    onChange={handleDurationChange}
+                    disabled={isRunning || !freshSession}
+                    placeholder="duration (mins)"
+                />
+                
             </div>
             
-            <div className="flex justify-between space-x-2 w-full max-w-lg font-bold px-6 py-3 ">
+            <div className="flex justify-between space-x-2 w-full font-bold">
                 <button 
                     onClick={toggleTimer}
-                    className={`border rounded-xl shadow w-full`}
+                    className={`flex-1 py-2 px-4 border rounded-xl shadow w-full ${baseColor} ${borderColor}`}
                 > 
                     {isRunning ? 'pause' : 'start'}
                 </button>
                 <button 
                     onClick={stopTimer}
-                    className={`border rounded-xl shadow w-full`}
+                    className={`flex-1 py-2 px-4 border rounded-xl shadow w-full ${baseColor} ${borderColor}`}
                 >
                         stop
                 </button>
                 {isRecordable && (
                     <button 
                         onClick={recordSet}
-                        className={`border rounded-xl shadow w-full`}
+                        className={`flex-1 py-2 px-4 border rounded-xl shadow w-full ${baseColor} ${borderColor}`}
                     >
                         record
                     </button>
                 )}
             </div>
 
-            <div className={`mt-8 w-full max-w-lg p-4 rounded-lg border shadow`}>
+            <div className={`mt-4 p-4 w-full max-w-lg rounded-xl border shadow ${baseColor} ${borderColor}`}>
                 <h2 className="text-lg font-semibold mb-4">sets: </h2>
                 <ul className="space-y-1">
                     {sessions.map((set, index) => (
                         <li 
                             key={index}
-                            className={`flex items-center space-x-2 border-b py-2`}>
+                            className={`flex items-center space-x-2 border-b py-2 ${baseColor} ${borderColor}`}>
                             <CustomCheckbox
                                 type="checkbox"
                                 checked={true}
