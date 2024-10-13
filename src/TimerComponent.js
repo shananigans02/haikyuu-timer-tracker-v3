@@ -1,8 +1,9 @@
 // update duration, timeLeft hardcoded values. in defn, stopTimer
 import React, { useState, useEffect, useCallback, useRef }  from "react";
 import haikyuuMelody from './assets/haikyuu_soft_melody.mp3';
+import CustomCheckbox from "./CustomCheckbox";
 
-const TimerComponent = ( { sessions, setSessions }) => {
+const TimerComponent = ( { sessions, setSessions, theme }) => {
     // duration in mins later but secs for now
     const [duration, setDuration] = useState(5);
     // timeLeft tracked in seconds. useState(duration * 60)
@@ -20,7 +21,6 @@ const TimerComponent = ( { sessions, setSessions }) => {
     const [isRecordable, setIsRecordable] = useState(false);
     
     const audioRef = useRef(null);
-
     
     const formatTime = (date) => {
         return date ? date.toLocaleTimeString([], {
@@ -227,54 +227,88 @@ const TimerComponent = ( { sessions, setSessions }) => {
         document.title = `${minutes}:${seconds < 10 ? '0' : ''}${seconds} left`;
     }, [timeLeft]);
 
+    // styling
+    const baseColor = theme === 'dark' ? 'bg-darkBlue text-customOrange' : 'bg-customOrange text-darkBlue';
+    const borderColor = theme === 'dark' ? 'border-customOrange' : 'border-darkBlue';
+
     return (
-        <div>
-            <h2> timer header </h2>
-
-            <div>
-                <label htmlFor="input">input: </label>
-                <input
-                    id="input"
-                    type="text"
-                    value={inputValue}
-                    onChange={handleInputChange}
-                    disabled={isRunning || !freshSession}
-                    placeholder="what are you working on?"
-                />
-            </div>
-            
-            <div>
-                <label htmlFor="duration">duration: </label>
-                <input
-                    id="duration"
-                    type="number"
-                    value={duration}
-                    onChange={handleDurationChange}
-                    disabled={isRunning || !freshSession}
-                />
+        <div className={`font-mono flex flex-col items-center justify-center ${baseColor} ${borderColor}`}>
+            <div
+                className={`p-1 mb-1`}
+                style={{
+                    fontSize: `clamp(4rem, 20vw, 11rem)`,
+                }}
+            >   
+                {Math.floor(timeLeft / 60)}:{timeLeft % 60 < 10? '0' : ''}{timeLeft % 60}
             </div>
 
-            <p> time left: {Math.floor(timeLeft / 60)}:{timeLeft % 60 < 10? '0' : ''}{timeLeft % 60}</p>
-
-            <button onClick={toggleTimer}> {isRunning ? 'pause' : 'start'}</button>
-
-            <button onClick={stopTimer}>stop</button>
-
-            {isRecordable && (<button onClick={recordSet}>record</button>)}
+            <div className="flex space-x-2 mb-4 w-full max-w-lg font-bold p-2">
+                <div>
+                    <input
+                        className={`border rounded-xl shadow w-full ${theme === 'dark' ? 'placeholder-dark' : 'placeholder-light'}`}
+                        id="input"
+                        type="text"
+                        value={inputValue}
+                        onChange={handleInputChange}
+                        disabled={isRunning || !freshSession}
+                        placeholder="working on..."
+                    />
+                </div>
             
+                <div>
+                    <input
+                        className={ `border rounded-xl shadow w-24 ${theme === 'dark' ? 'placeholder-dark' : 'placeholder-light'}`}
+                        id="duration"
+                        type="number"
+                        value={duration}
+                        onChange={handleDurationChange}
+                        disabled={isRunning || !freshSession}
+                        placeholder="duration (mins)"
+                    />
+                </div>
+            </div>
+            
+            <div className="flex justify-between space-x-2 w-full max-w-lg font-bold px-6 py-3 ">
+                <button 
+                    onClick={toggleTimer}
+                    className={`border rounded-xl shadow w-full`}
+                > 
+                    {isRunning ? 'pause' : 'start'}
+                </button>
+                <button 
+                    onClick={stopTimer}
+                    className={`border rounded-xl shadow w-full`}
+                >
+                        stop
+                </button>
+                {isRecordable && (
+                    <button 
+                        onClick={recordSet}
+                        className={`border rounded-xl shadow w-full`}
+                    >
+                        record
+                    </button>
+                )}
+            </div>
 
-            <div>
-                <h3>sets: </h3>
-                <ul>
+            <div className={`mt-8 w-full max-w-lg p-4 rounded-lg border shadow`}>
+                <h2 className="text-lg font-semibold mb-4">sets: </h2>
+                <ul className="space-y-1">
                     {sessions.map((set, index) => (
-                        <li key={index}>
-                            <input
+                        <li 
+                            key={index}
+                            className={`flex items-center space-x-2 border-b py-2`}>
+                            <CustomCheckbox
                                 type="checkbox"
                                 checked={true}
                                 onChange={() => handleRemoveSet(index)}
+                                theme={theme}
                             /> 
-                            {formatTime(set.start)} -  {formatTime(set.end)} ({formatElapsedTime(set.elapsed)})
-                            {set.task && `: ${set.task}`}
+                            <span>
+                                {formatTime(set.start)} -  {formatTime(set.end)} ({formatElapsedTime(set.elapsed)})
+                                {set.task && `: ${set.task}`}
+                            </span>
+                            
                         </li>
                     ))}
                 </ul>
@@ -282,7 +316,7 @@ const TimerComponent = ( { sessions, setSessions }) => {
             </div>
 
             <audio ref={audioRef} src={haikyuuMelody}/>
-            
+        {/* closing parent div! */}
         </div>
     );
 };
