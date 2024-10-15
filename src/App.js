@@ -11,7 +11,7 @@ function App() {
 
   return (
     <Router>
-      <div className={`App ${theme === 'dark' ? 'bg-darkBlue' : 'bg-customOrange'} min-h-screen overflow-hidden`}>
+      <div className={`App font-mono ${theme === 'dark' ? 'bg-darkBlue' : 'bg-customOrange'} min-h-screen overflow-hidden`}>
         <NavbarComponent setTheme={setTheme} theme={theme} />
         
         <div className={`mx-[2vw] my-4 mb-[2vw] p-4 pb-8 border rounded-xl shadow ${containerBorderColor}`}>

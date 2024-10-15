@@ -21,6 +21,9 @@ const TimerComponent = ( { sessions, setSessions, theme }) => {
     const [isRecordable, setIsRecordable] = useState(false);
     
     const audioRef = useRef(null);
+
+    const [categories, setCategories] = useState([]);
+    const [showDropdown, setShowDropdown] = useState(false);
     
     const formatTime = (date) => {
         return date ? date.toLocaleTimeString([], {
@@ -44,7 +47,25 @@ const TimerComponent = ( { sessions, setSessions, theme }) => {
     // handling changes
     const handleInputChange = (event) => {
         setInputValue(event.target.value); 
+        setShowDropdown(true);
     };
+
+    const handleCategorySelect = (category) => {
+        setInputValue(category);
+        setShowDropdown(false);
+    }
+
+    const updateCategories = useCallback((newTask) => {
+        if(newTask) {
+            setCategories(prevCategories => {
+                const cleanedTask = newTask.toLowerCase().trim();
+                if (!prevCategories.includes(cleanedTask)) {
+                    return [...prevCategories, cleanedTask];
+                }
+                return prevCategories;
+            })
+        }
+    }, []);
 
     const handleDurationChange = (event) => {
         const newDuration = parseInt(event.target.value);
@@ -84,6 +105,8 @@ const TimerComponent = ( { sessions, setSessions, theme }) => {
             setIsRunning(true); 
             setfreshSession(false);
             setIsRecordable(true);
+            updateCategories(inputValue);
+            setShowDropdown(false);
         } else if (!isRunning && !freshSession) {
             // RESUME timer if we aren't running, its not fresh set
             setSegmentStart(Date.now())
@@ -142,7 +165,11 @@ const TimerComponent = ( { sessions, setSessions, theme }) => {
                             task: inputValue
                         }
                     ]);
-    
+
+                    if (inputValue) {
+                        updateCategories();
+                    }
+
                     return finalElapsedTime;
                 })             
             } else {
@@ -169,7 +196,7 @@ const TimerComponent = ( { sessions, setSessions, theme }) => {
     // dependencies - variables / state values that come from / are defined outside the fn but are used within the fn
     // point is to update function whenever these external values change
     // since finalElapsedTime and endTimeDate are both local variables calculated within this fn, they dont need to be listed as dependency array
-    }, [isRecordable, segmentStart, startTime, totalElapsedTime, inputValue, setSessions, stopTimer]);
+    }, [isRecordable, segmentStart, startTime, totalElapsedTime, inputValue, setSessions, updateCategories, stopTimer]);
 
     useEffect(() => {
         // console.log("effect running, isRunning:", isRunning);
@@ -186,7 +213,7 @@ const TimerComponent = ( { sessions, setSessions, theme }) => {
                             audioRef.current.play();
                         }
                         if (isRecordable) {
-                            recordSet();
+                            recordSet(inputValue);
                         }
                         return 0;    
                     }
@@ -227,6 +254,21 @@ const TimerComponent = ( { sessions, setSessions, theme }) => {
         document.title = `${minutes}:${seconds < 10 ? '0' : ''}${seconds} left`;
     }, [timeLeft]);
 
+    useEffect(() => {
+        const handleKeyDown = (event) => {
+            if (event.key === 'Enter' && !isRunning) {
+                event.preventDefault();
+                toggleTimer();
+            }
+        };
+        
+        document.addEventListener("keydown", handleKeyDown);
+
+        return () => {
+        document.removeEventListener("keydown", handleKeyDown);
+        }
+    }, [toggleTimer, isRunning]);
+
     // styling
     const baseColor = theme === 'dark' ? 'bg-darkBlue text-customOrange' : 'bg-customOrange text-darkBlue';
     const borderColor = theme === 'dark' ? 'border-customOrange' : 'border-darkBlue';
@@ -243,15 +285,34 @@ const TimerComponent = ( { sessions, setSessions, theme }) => {
             </div>
 
             <div className="flex space-x-2 w-full mb-4 font-bold">
-                <input
-                    className={`flex-grow p-2 border rounded-xl shadow  ${baseColor} ${borderColor} ${theme === 'dark' ? 'placeholder-dark' : 'placeholder-light'}`}
-                    id="input"
-                    type="text"
-                    value={inputValue}
-                    onChange={handleInputChange}
-                    disabled={isRunning || !freshSession}
-                    placeholder="working on..."
-                />
+                <div className="flex-grow relative">
+                    <input
+                        className={`w-full flex-grow p-2 border rounded-xl shadow ${baseColor} ${borderColor} ${theme === 'dark' ? 'placeholder-dark' : 'placeholder-light'}`}
+                        id="input"
+                        type="text"
+                        value={inputValue}
+                        onChange={handleInputChange}
+                        onFocus={() => setShowDropdown(true)}
+                        onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+                        disabled={isRunning || !freshSession}
+                        placeholder=
+                        "working on..."
+                    />
+
+                    {showDropdown && categories.length > 0 && (
+                        <ul className={`absolute z-10 w-full mt-1 rounded-xl shadow-lg ${baseColor} bg-opacity-90 max-h-40 overflow-y-auto`}>
+                        {categories.map((category, index) => (
+                            <li 
+                                key={index}
+                                className="px-4 py-2 cursor-pointer hover:${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'} first:rounded-t-xl last:rounded-b-xl"
+                                onClick={() => handleCategorySelect(category)}
+                            >
+                                {category}
+                            </li>
+                        ))}
+                    </ul>
+                    )}
+                </div>
                 
                 <input
                     className={ `w-24 p-2 border rounded-xl shadow ${baseColor} ${borderColor} ${theme === 'dark' ? 'placeholder-dark' : 'placeholder-light'}`}
