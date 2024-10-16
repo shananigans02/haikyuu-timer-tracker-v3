@@ -5,19 +5,18 @@ import CustomCheckbox from "./CustomCheckbox";
 
 const TimerComponent = ( { sessions, setSessions, theme }) => {
     // duration in mins 
-    const [duration, setDuration] = useState(5);
-    // timeLeft tracked in seconds. useState(duration * 60)
+    const [duration, setDuration] = useState(30);
+    // time left in seconds
+    const [timeLeft, setTimeLeft] = useState(duration * 60);
+
     const [freshSession, setfreshSession] = useState(true);
-    const [timeLeft, setTimeLeft] = useState(duration);
     const [isRunning, setIsRunning] = useState(false); 
     const [inputValue, setInputValue] = useState('');
 
     const [startTime, setStartTime] = useState(null);
     const [endTime, setEndTime] = useState(null);
-    
     const [segmentStart, setSegmentStart] = useState(null);
     const [totalElapsedTime, setTotalElapsedTime] = useState(0);
-    // array of objects, where each object is a completed timer session
     const [isRecordable, setIsRecordable] = useState(false);
     
     const audioRef = useRef(null);
@@ -84,7 +83,7 @@ const TimerComponent = ( { sessions, setSessions, theme }) => {
             setTimeLeft(0);
         } else {
             setDuration(newDuration);
-            setTimeLeft(newDuration);
+            setTimeLeft(newDuration * 60);
         }
     }
 
@@ -105,7 +104,7 @@ const TimerComponent = ( { sessions, setSessions, theme }) => {
             const now = new Date();
             setStartTime(now);
             setSegmentStart(now.getTime()); // timestamp in milliseconds
-            setTimeLeft(duration);
+            setTimeLeft(duration * 60);
             setIsRunning(true); 
             setfreshSession(false);
             setIsRecordable(true);
@@ -134,7 +133,7 @@ const TimerComponent = ( { sessions, setSessions, theme }) => {
         setfreshSession(true);
 
         setDuration(30);
-        setTimeLeft(5);
+        setTimeLeft(30 * 60);
         setInputValue('');
         setStartTime(null);
         setEndTime(null);
@@ -171,7 +170,7 @@ const TimerComponent = ( { sessions, setSessions, theme }) => {
                     ]);
 
                     if (inputValue) {
-                        updateCategories();
+                        updateCategories(inputValue);
                     }
 
                     return finalElapsedTime;
@@ -203,7 +202,6 @@ const TimerComponent = ( { sessions, setSessions, theme }) => {
     }, [isRecordable, segmentStart, startTime, totalElapsedTime, inputValue, setSessions, updateCategories, stopTimer]);
 
     useEffect(() => {
-        // console.log("effect running, isRunning:", isRunning);
         let intervalId;
 
         if(isRunning) {
@@ -215,9 +213,6 @@ const TimerComponent = ( { sessions, setSessions, theme }) => {
                         setIsRunning(false);
                         if (audioRef.current) {
                             audioRef.current.play();
-                        }
-                        if (isRecordable) {
-                            recordSet(inputValue);
                         }
                         return 0;    
                     }
@@ -231,15 +226,23 @@ const TimerComponent = ( { sessions, setSessions, theme }) => {
             return () => {
                 if (intervalId) {
                     // cleanup function that runs when useEffect is called + theres existing interval to clean up
+                    // so it either gets called when component unmounts, or before effect runs again if dependency - isRunning - changes
                     // when we first start, the cleanup fn is defined but not run.
                     // console.log('cleanup: clearing interval')
                     clearInterval(intervalId);
                 }
             }
         }
-    }, [isRunning, isRecordable, inputValue, recordSet]);
+    }, [isRunning]);
     
-    // watching specific state variables
+    // can't have this in above bc it would be updating timercomponent and app.js tgt since we r calling recordSet, which violates React rules
+    useEffect(() => {
+        if (timeLeft === 0 && isRecordable) {
+            recordSet();
+        }
+    }, [timeLeft, isRecordable, recordSet]);
+
+    // watching specific changes - can be deleted
     useEffect(() => {
         // console.log("inside the use effect --------")
         console.log("timeleft: ", timeLeft)
@@ -269,7 +272,7 @@ const TimerComponent = ( { sessions, setSessions, theme }) => {
         document.addEventListener("keydown", handleKeyDown);
 
         return () => {
-        document.removeEventListener("keydown", handleKeyDown);
+            document.removeEventListener("keydown", handleKeyDown);
         }
     }, [toggleTimer, isRunning]);
 
@@ -325,7 +328,7 @@ const TimerComponent = ( { sessions, setSessions, theme }) => {
                     value={duration}
                     onChange={handleDurationChange}
                     disabled={isRunning || !freshSession}
-                    placeholder="duration (mins)"
+                    placeholder="mins"
                 />
                 
             </div>
