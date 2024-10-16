@@ -4,7 +4,7 @@ import haikyuuMelody from './assets/haikyuu_soft_melody.mp3';
 import CustomCheckbox from "./CustomCheckbox";
 
 const TimerComponent = ( { sessions, setSessions, theme }) => {
-    // duration in mins later but secs for now
+    // duration in mins 
     const [duration, setDuration] = useState(5);
     // timeLeft tracked in seconds. useState(duration * 60)
     const [freshSession, setfreshSession] = useState(true);
@@ -95,8 +95,12 @@ const TimerComponent = ( { sessions, setSessions, theme }) => {
         }
     };
     
-    const toggleTimer = () => {
-        if (!isRunning && freshSession) {
+    const toggleTimer = useCallback (() => {
+        if (!inputValue.length > 0) {
+            alert("pls tell us what u are working on ~")
+        }
+
+        if (!isRunning && freshSession && inputValue.length > 0) {
             // START timer if u aren't not running yet, its a fresh set
             const now = new Date();
             setStartTime(now);
@@ -122,7 +126,7 @@ const TimerComponent = ( { sessions, setSessions, theme }) => {
             setIsRunning(false);
             setSegmentStart(null);
         }  
-    }
+    }, [isRunning, freshSession, inputValue, duration, segmentStart, totalElapsedTime, setStartTime, setSegmentStart, setTimeLeft, setIsRunning, setfreshSession, setIsRecordable, updateCategories, setShowDropdown])
 
     const stopTimer = useCallback (() => {
         // reset
@@ -131,7 +135,7 @@ const TimerComponent = ( { sessions, setSessions, theme }) => {
 
         setDuration(30);
         setTimeLeft(5);
-        setInputValue('')
+        setInputValue('');
         setStartTime(null);
         setEndTime(null);
         setSegmentStart(null);
@@ -233,7 +237,7 @@ const TimerComponent = ( { sessions, setSessions, theme }) => {
                 }
             }
         }
-    }, [isRunning, isRecordable, recordSet]);
+    }, [isRunning, isRecordable, inputValue, recordSet]);
     
     // watching specific state variables
     useEffect(() => {
@@ -304,7 +308,7 @@ const TimerComponent = ( { sessions, setSessions, theme }) => {
                         {categories.map((category, index) => (
                             <li 
                                 key={index}
-                                className="px-4 py-2 cursor-pointer hover:${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'} first:rounded-t-xl last:rounded-b-xl"
+                                className={`px-4 py-2 cursor-pointer hover:${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'} first:rounded-t-xl last:rounded-b-xl`}
                                 onClick={() => handleCategorySelect(category)}
                             >
                                 {category}
@@ -330,7 +334,7 @@ const TimerComponent = ( { sessions, setSessions, theme }) => {
                 <button 
                     onClick={toggleTimer}
                     className={`flex-1 py-2 px-4 border rounded-xl shadow w-full ${baseColor} ${borderColor}`}
-                > 
+                >
                     {isRunning ? 'pause' : 'start'}
                 </button>
                 <button 
