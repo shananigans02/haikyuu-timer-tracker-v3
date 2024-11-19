@@ -6,7 +6,7 @@ import StatsComponent from './StatsComponent';
 
 function App() {
   const [sessions, setSessions] = useState([]);
-  const [theme, setTheme] = useState('light');
+  const [theme, setTheme] = useState('dark');
   const containerBorderColor = theme === 'dark' ? 'border-customOrange' : 'border-darkBlue';
 
   return (
